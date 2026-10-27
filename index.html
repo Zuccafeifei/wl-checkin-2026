@@ -293,6 +293,25 @@
       <button class="retry" onclick="syncNow(false)">🔄 立即重试同步（补传本机记录）</button>
       <button class="retry" onclick="enableNotify()" style="border-color:#a7f3d0;background:#f0fdf6;color:#047857">🔔 开启晚 20 点漏打卡提醒</button>
       <div class="note" id="lastSyncNote">填好后打卡会自动上传云端；换手机/清缓存后重新填一次即可。</div>
+      <div class="note" style="background:#fff7ed;border-color:#fed7aa;color:#9a3412">🇨🇳 国内手机常连不上 GitHub 接口（页面能开≠接口能连）。连不上就用下面的「同步码」互通，一样能看到对方进度。</div>
+    </div>
+
+    <div class="card">
+      <h3>📡 同步码互通 <span class="tag">无需网络接口</span></h3>
+      <div class="row2">
+        <button class="btn sm" onclick="showSyncCode()">📤 生成我的同步码</button>
+        <button class="btn sm ghost" onclick="copySyncCode()">📋 复制同步码</button>
+      </div>
+      <div id="syncCodeBox" style="display:none;margin-top:8px">
+        <textarea id="outCode" readonly rows="3" style="width:100%;font-size:11px;border:1px solid var(--line);border-radius:10px;padding:8px;box-sizing:border-box;color:#6b5761;resize:vertical"></textarea>
+        <div class="note">把这段码发到群里，对方复制后粘到下面导入即可 👇</div>
+      </div>
+      <div class="fi" style="margin-top:10px">
+        <label>粘贴对方的同步码（或整段日报）</label>
+        <textarea id="inCode" rows="3" placeholder="把群里对方发的同步码 / 整段日报粘进来" style="width:100%;font-size:11px;border:1px solid var(--line);border-radius:10px;padding:8px;box-sizing:border-box;resize:vertical"></textarea>
+      </div>
+      <button class="btn sm" onclick="importSyncCode()">📥 导入并合并</button>
+      <div class="note">只含日期+体重，不含照片。按日期合并，<b>同一天以你本机记录为准</b>，不会覆盖你已打的卡。</div>
     </div>
 
     <div class="card">
@@ -493,7 +512,8 @@ function setStatus(s){
   if(pn){
     if(s==='off' && pendingCount()>0){
       pn.style.display='block';
-      pn.innerHTML='📦 有 <b>'+pendingCount()+'</b> 条记录存在本机还没上传，别担心 —— 网络恢复后打开页面（或点上面的状态）会自动补传，<b>不用重新填</b>。';
+      pn.innerHTML='📦 有 <b>'+pendingCount()+'</b> 条记录存在本机还没上传（不用重新填）。<br>'
+        +'① 联网后会自动补传　② 急的话去「📡 同步码互通」生成同步码发群里，对方导入即可 👌';
     }else if(s==='ok'){ pn.style.display='none'; }
     else if(s==='off'){ pn.style.display='none'; }
   }
@@ -986,7 +1006,8 @@ function copyReport(){
   var s=stats(cur), cfg=PEOPLE[cur], t=todayStr();
   var txt='🍑 减重打卡 '+t+'\n👤 '+cur+'\n⚖️ 今日 '+s.cur.toFixed(2)+'kg（起点'+cfg.start+' → 目标'+cfg.goal+'）\n'
     +'📉 累计已减 '+(s.lost*2).toFixed(1)+' 斤 / 应减 '+(s.need*2).toFixed(1)+' 斤\n'
-    +'🎯 完成率 '+Math.round(s.rate*100)+'%\n💸 当前预估罚款 ¥'+s.fine+'\n💪 还差 '+(s.left*2).toFixed(1)+' 斤，冲！';
+    +'🎯 完成率 '+Math.round(s.rate*100)+'%\n💸 当前预估罚款 ¥'+s.fine+'\n💪 还差 '+(s.left*2).toFixed(1)+' 斤，冲！'
+    +'\n——————\n📡 同步码（对方复制整段粘到页面即可导入）\n'+encodeSync();
   if(navigator.clipboard){ navigator.clipboard.writeText(txt).then(function(){toast('已复制，去群里粘贴吧～');},function(){fallbackCopy(txt);}); }
   else fallbackCopy(txt);
 }
@@ -994,6 +1015,64 @@ function fallbackCopy(txt){
   var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select();
   try{document.execCommand('copy'); toast('已复制～');}catch(e){toast('复制失败，请手动截图');}
   document.body.removeChild(ta);
+}
+/* ============ 同步码（不依赖任何网络接口） ============ */
+function encodeSync(){
+  var db=loadAll(), parts=[];
+  var names=['杨莉荣','李婷婷'], seen={};
+  for(var q0 in db){ if(names.indexOf(q0)<0) names.push(q0); }
+  for(var i=0;i<names.length;i++){
+    var p=names[i]; if(seen[p]) continue; seen[p]=1;
+    var rs=(db[p]&&db[p].records)||{}, items=[];
+    for(var d in rs){ if(rs[d] && rs[d].w) items.push(d.slice(5).replace('-','')+':'+(+rs[d].w).toFixed(1)); }
+    items.sort();
+    if(items.length) parts.push(p+'='+items.join(','));
+  }
+  return 'WLv1;'+parts.join(';');
+}
+function decodeSync(txt){
+  txt=(txt||'').replace(/\s+/g,' ');
+  var i=txt.indexOf('WLv1;'); if(i<0) return null;
+  var body=txt.slice(i+5).split(' ')[0].split('\n')[0];
+  var yr=START.slice(0,4), out={}, segs=body.split(';');
+  for(var k=0;k<segs.length;k++){
+    var seg=segs[k]; if(!seg) continue;
+    var eq=seg.indexOf('='); if(eq<0) continue;
+    var name=seg.slice(0,eq), items=seg.slice(eq+1).split(',');
+    if(!out[name]) out[name]={records:{}};
+    for(var j=0;j<items.length;j++){
+      var kv=items[j].split(':'); if(kv.length!==2) continue;
+      var mmdd=kv[0], w=parseFloat(kv[1]);
+      if(mmdd.length!==4 || isNaN(w) || w<30 || w>150) continue;
+      var d=yr+'-'+mmdd.slice(0,2)+'-'+mmdd.slice(2);
+      out[name].records[d]={w:Math.round(w*10)/10, t:'同步', ts:new Date(d+'T12:00:00').getTime()};
+    }
+  }
+  return Object.keys(out).length?out:null;
+}
+function showSyncCode(){
+  var t=encodeSync();
+  document.getElementById('outCode').value=t;
+  document.getElementById('syncCodeBox').style.display='block';
+}
+function copySyncCode(){
+  var t=document.getElementById('outCode').value;
+  if(!t){ t=encodeSync(); document.getElementById('outCode').value=t; document.getElementById('syncCodeBox').style.display='block'; }
+  if(!t || t==='WLv1;'){ toast('还没有任何记录，先打一次卡'); return; }
+  if(navigator.clipboard){ navigator.clipboard.writeText(t).then(function(){toast('已复制，去群里粘贴～');},function(){fallbackCopy(t);}); }
+  else fallbackCopy(t);
+}
+function importSyncCode(){
+  var txt=document.getElementById('inCode').value||'';
+  var inc=decodeSync(txt);
+  if(!inc){ toast('没识别到同步码，检查是否复制完整'); return; }
+  var local=loadAll(), n=0;
+  for(var p in inc){ var rs=inc[p].records||{}, lr=((local[p]||{}).records)||{};
+    for(var d in rs){ if(!lr[d]) n++; } }
+  var merged=mergeDB(local, inc);
+  saveAll(merged); renderAll();
+  document.getElementById('inCode').value='';
+  toast(n? ('📥 已导入，新增 '+n+' 条记录') : '📥 已合并，没有新增日期');
 }
 function exportData(){
   var db=loadAll();
