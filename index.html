@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#ff7eb3">
+<title>🍑 秋日减重挑战 10.27-11.27</title>
+<style>
+  :root{
+    --pink:#ff7eb3; --pink2:#ff9ecd; --purple:#a78bfa; --green:#34d399;
+    --orange:#fb923c; --red:#f87171; --bg:#fff5f8; --card:#ffffff;
+    --text:#3b2a35; --sub:#9b8b93; --line:#ffe4ee;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--text); font-size:15px;
+    padding-bottom:calc(70px + env(safe-area-inset-bottom));
+  }
+  /* ===== Header ===== */
+  header{
+    background:linear-gradient(135deg,#ff7eb3 0%,#ff9ecd 45%,#a78bfa 100%);
+    color:#fff; padding:calc(14px + env(safe-area-inset-top)) 16px 16px;
+    border-radius:0 0 24px 24px; box-shadow:0 6px 18px rgba(255,126,179,.28);
+  }
+  .h-top{display:flex; align-items:center; justify-content:space-between;}
+  .h-title{font-size:18px; font-weight:700; letter-spacing:.5px;}
+  .h-sub{font-size:12px; opacity:.92; margin-top:3px;}
+  .cd{
+    background:rgba(255,255,255,.22); border-radius:14px; padding:6px 12px;
+    text-align:center; backdrop-filter:blur(4px);
+  }
+  .cd b{display:block; font-size:20px; line-height:1.1;}
+  .cd span{font-size:10px; opacity:.9;}
+  .range{
+    margin-top:12px; background:rgba(255,255,255,.18); border-radius:12px;
+    padding:8px 12px; font-size:12px; display:flex; justify-content:space-between; align-items:center;
+  }
+  .bar-wrap{height:7px; background:rgba(255,255,255,.3); border-radius:99px; margin-top:8px; overflow:hidden;}
+  .bar-in{height:100%; background:#fff; border-radius:99px; transition:width .5s;}
+
+  /* ===== Person switch ===== */
+  .pswitch{display:flex; gap:8px; padding:14px 14px 4px;}
+  .pbtn{
+    flex:1; background:#fff; border:2px solid transparent; border-radius:16px; padding:10px 8px;
+    box-shadow:0 3px 10px rgba(255,126,179,.12); text-align:center; cursor:pointer; transition:.2s;
+  }
+  .pbtn .nm{font-weight:700; font-size:15px;}
+  .pbtn .tg{font-size:11px; color:var(--sub); margin-top:2px;}
+  .pbtn.on{border-color:var(--pink); background:linear-gradient(180deg,#fff0f6,#fff);}
+  .pbtn.on .nm{color:var(--pink);}
+
+  main{padding:0 14px;}
+  .card{
+    background:var(--card); border-radius:18px; padding:16px; margin-top:12px;
+    box-shadow:0 4px 14px rgba(255,126,179,.10); border:1px solid var(--line);
+  }
+  .card h3{margin:0 0 10px; font-size:15px; display:flex; align-items:center; gap:6px;}
+  .card h3 .tag{font-size:10px; font-weight:400; color:var(--sub); background:#fff0f6; padding:2px 7px; border-radius:99px;}
+
+  /* ===== Stats ===== */
+  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; text-align:center;}
+  .grid3 .box{background:#fff8fb; border-radius:12px; padding:10px 4px;}
+  .grid3 .v{font-size:19px; font-weight:800; line-height:1.2;}
+  .grid3 .l{font-size:10px; color:var(--sub); margin-top:2px;}
+  .big{font-size:28px; font-weight:800;}
+  .up{color:var(--green);} .down{color:var(--red);} .muted{color:var(--sub);}
+
+  .prog{height:14px; background:#ffeaF2; border-radius:99px; overflow:hidden; margin:12px 0 6px; position:relative;}
+  .prog i{display:block; height:100%; background:linear-gradient(90deg,#ff7eb3,#a78bfa); border-radius:99px; transition:width .6s;}
+  .prog-txt{display:flex; justify-content:space-between; font-size:11px; color:var(--sub);}
+
+  /* ===== Fine ===== */
+  .fine{
+    background:linear-gradient(135deg,#fff1f2,#ffe4e6); border:1px dashed #fca5a5;
+    border-radius:18px; padding:16px; margin-top:12px; text-align:center;
+  }
+  .fine .num{font-size:40px; font-weight:900; color:var(--red); line-height:1;}
+  .fine .num small{font-size:16px;}
+  .fine .cap{font-size:12px; color:#b4616b; margin-top:6px;}
+  .fine .fml{font-size:11px; color:#c98b93; margin-top:8px; line-height:1.6; background:rgba(255,255,255,.6); border-radius:10px; padding:8px;}
+
+  /* ===== Form ===== */
+  .fi{margin-bottom:12px;}
+  .fi label{font-size:12px; color:var(--sub); display:block; margin-bottom:5px; font-weight:600;}
+  input[type=number],input[type=date],input[type=time],select{
+    width:100%; border:2px solid var(--line); border-radius:12px; padding:12px 14px;
+    font-size:17px; color:var(--text); background:#fffafd; outline:none; font-family:inherit;
+  }
+  input:focus,select:focus{border-color:var(--pink);}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .btn{
+    width:100%; border:none; border-radius:14px; padding:14px; font-size:16px; font-weight:700;
+    color:#fff; background:linear-gradient(135deg,#ff7eb3,#a78bfa); box-shadow:0 5px 14px rgba(255,126,179,.35);
+    cursor:pointer; font-family:inherit;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn.ghost{background:#fff; color:var(--pink); border:2px solid var(--pink); box-shadow:none;}
+  .btn.sm{padding:10px; font-size:13px;}
+  .btn.warn{background:linear-gradient(135deg,#fb923c,#f87171);}
+
+  .photo-box{
+    border:2px dashed var(--pink2); border-radius:14px; padding:14px; text-align:center;
+    background:#fffafd; font-size:13px; color:var(--sub); position:relative;
+  }
+  .photo-box img{max-width:100%; border-radius:10px; margin-top:8px;}
+  #photo{display:none;}
+  .thumb-del{
+    display:inline-block; margin-top:8px; font-size:12px; color:var(--red); text-decoration:underline;
+  }
+
+  /* ===== List ===== */
+  .rec{
+    display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);
+  }
+  .rec:last-child{border-bottom:none;}
+  .rec .d{font-size:12px; color:var(--sub); width:64px; flex:none;}
+  .rec .w{font-size:17px; font-weight:800; width:76px; flex:none;}
+  .rec .ch{font-size:12px; flex:1; text-align:right;}
+  .rec .pic{width:38px; height:38px; border-radius:8px; object-fit:cover; flex:none; border:1px solid var(--line);}
+  .rec .del{color:var(--sub); font-size:16px; padding:0 4px; flex:none;}
+
+  /* ===== Calendar ===== */
+  .cal{display:grid; grid-template-columns:repeat(7,1fr); gap:5px;}
+  .cal .hd{text-align:center; font-size:11px; color:var(--sub); padding:4px 0; font-weight:700;}
+  .cell{
+    aspect-ratio:1/1.15; border-radius:10px; background:#fafafa; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; font-size:10px; color:#c9c9c9; border:1px solid #f0f0f0;
+  }
+  .cell.out{opacity:.25;}
+  .cell.done{background:#e8fbf3; border-color:#a7f3d0; color:#0f9d63; font-weight:700;}
+  .cell.miss{background:#fff1f2; border-color:#fecdd3; color:#e0707a;}
+  .cell.today{border:2px solid var(--purple); box-shadow:0 0 0 3px rgba(167,139,250,.15);}
+  .cell b{font-size:12px;}
+  .cell i{font-style:normal; font-size:9px; margin-top:1px;}
+
+  /* ===== Plan ===== */
+  .plan-sec{margin-bottom:14px;}
+  .plan-sec h4{margin:0 0 6px; font-size:14px; color:var(--pink);}
+  .plan-sec ul{margin:0; padding-left:18px; font-size:13px; line-height:1.9; color:#5c4a53;}
+  table.pt{width:100%; border-collapse:collapse; font-size:12.5px;}
+  table.pt th,table.pt td{border:1px solid var(--line); padding:7px 6px; text-align:left;}
+  table.pt th{background:#fff0f6; color:var(--pink); font-weight:700; white-space:nowrap;}
+  .note{font-size:11.5px; color:var(--sub); line-height:1.7; margin-top:6px;}
+
+  /* ===== Bottom nav ===== */
+  nav{
+    position:fixed; left:0; right:0; bottom:0; background:#fff; display:flex;
+    border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom);
+    box-shadow:0 -4px 14px rgba(255,126,179,.10); z-index:20;
+  }
+  nav button{
+    flex:1; border:none; background:none; padding:8px 0 7px; font-size:10px; color:var(--sub);
+    font-family:inherit; cursor:pointer;
+  }
+  nav button .ic{font-size:19px; display:block; margin-bottom:2px;}
+  nav button.on{color:var(--pink); font-weight:700;}
+
+  .view{display:none;} .view.on{display:block;}
+  .hide{display:none !important;}
+  .toast{
+    position:fixed; left:50%; top:40%; transform:translate(-50%,-50%); background:rgba(59,42,53,.92);
+    color:#fff; padding:12px 20px; border-radius:12px; font-size:14px; z-index:99; opacity:0;
+    transition:.3s; pointer-events:none; text-align:center; max-width:80%;
+  }
+  .toast.on{opacity:1;}
+
+  /* ===== PK 榜 & 同步状态 ===== */
+  .pk{display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px dashed var(--line);}
+  .pk:last-of-type{border-bottom:none;}
+  .pk .who{width:62px; font-size:12.5px; font-weight:700; flex:none; line-height:1.4;}
+  .pk .pb{flex:1; height:11px; background:#ffeaF2; border-radius:99px; overflow:hidden;}
+  .pk .pb i{display:block; height:100%; background:linear-gradient(90deg,#ff7eb3,#a78bfa); transition:width .6s;}
+  .pk .num{width:86px; text-align:right; font-size:11.5px; flex:none; color:#6b5761;}
+  .sync{font-size:10px; font-weight:400; padding:2px 9px; border-radius:99px; background:#f0f0f0; color:#999; margin-left:auto;}
+  .sync.ok{background:#e8fbf3; color:#0f9d63;}
+  .sync.off{background:#fff1f2; color:#e0707a;}
+  .sync.ing{background:#fff7ed; color:#c2410c;}
+  .pkmini{display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:12.5px;}
+  .pkmini:last-of-type{border-bottom:none;}
+  .pkmini .w1{width:74px; font-weight:700; flex:none;}
+  .pkmini .w2{flex:1; color:#6b5761;}
+  .pkmini .w3{font-weight:800; flex:none;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-top">
+    <div>
+      <div class="h-title">🍑 秋日减重挑战</div>
+      <div class="h-sub">10月27日 — 11月27日 · 32天冲刺</div>
+    </div>
+    <div class="cd"><b id="cdDays">--</b><span>剩余天数</span></div>
+  </div>
+  <div class="range">
+    <span id="rangeL">📅 今天是第 1 天</span>
+    <span id="rangeR">进度 0%</span>
+  </div>
+  <div class="bar-wrap"><i class="bar-in" id="timeBar" style="width:0%"></i></div>
+</header>
+
+<div class="pswitch">
+  <div class="pbtn on" data-p="杨莉荣" onclick="switchPerson('杨莉荣')">
+    <div class="nm">🌸 杨莉荣</div><div class="tg">60.9 → 57.0 kg</div>
+  </div>
+  <div class="pbtn" data-p="李婷婷" onclick="switchPerson('李婷婷')">
+    <div class="nm">🍀 李婷婷</div><div class="tg">58.35 → 55.0 kg</div>
+  </div>
+</div>
+
+<main>
+
+  <!-- ============ 打卡 ============ -->
+  <div class="view on" id="v-checkin">
+    <div class="card">
+      <h3>🏆 实时 PK 榜 <span id="syncStatus" class="sync">未开启</span></h3>
+      <div id="pkBox"></div>
+      <div class="note" id="syncNote">☁️ 开启云同步后，两人进度实时互通</div>
+    </div>
+
+    <div class="card">
+      <h3>📊 我的战况 <span class="tag" id="tagName">杨莉荣</span></h3>
+      <div class="grid3">
+        <div class="box"><div class="v" id="sCur">--</div><div class="l">当前体重(kg)</div></div>
+        <div class="box"><div class="v up" id="sLost">--</div><div class="l">已减(斤)</div></div>
+        <div class="box"><div class="v" id="sLeft">--</div><div class="l">还差(斤)</div></div>
+      </div>
+      <div class="prog"><i id="progBar" style="width:0%"></i></div>
+      <div class="prog-txt"><span id="pStart">起点 --</span><span id="pNow">当前</span><span id="pGoal">目标 --</span></div>
+      <div class="note" id="paceTxt"></div>
+    </div>
+
+    <div class="fine">
+      <div style="font-size:12px;color:#b4616b;">💸 按当前体重预估罚款</div>
+      <div class="num"><small>¥</small><span id="fineNow">0</span></div>
+      <div class="cap" id="fineCap">达成目标即可免罚 🎉</div>
+      <div class="fml">
+        罚款 = 未达标斤数 ÷ 应减斤数 × 500元<br>
+        <span id="fmlDetail"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>⚖️ 今日打卡 <span class="tag" id="tagDate"></span></h3>
+      <div class="fi">
+        <label>今日体重（kg）</label>
+        <input type="number" id="inW" step="0.05" inputmode="decimal" placeholder="例如 60.35">
+      </div>
+      <div class="row2">
+        <div class="fi"><label>称重时间</label><input type="time" id="inT"></div>
+        <div class="fi"><label>称重日期</label><input type="date" id="inD"></div>
+      </div>
+      <div class="fi">
+        <label>📷 体重秤照片（选填，存本机）</label>
+        <div class="photo-box" id="photoBox" onclick="document.getElementById('photo').click()">
+          点击上传 / 拍照
+          <div id="photoPrev"></div>
+        </div>
+        <input type="file" id="photo" accept="image/*" capture="environment" onchange="onPhoto(event)">
+      </div>
+      <button class="btn" onclick="submit()">✅ 提交今日打卡</button>
+      <div class="note" style="text-align:center;margin-top:10px;">
+        ⏰ 建议：每日早起空腹、如厕后、同一台秤称重<br>若当天多次打卡，以最后一次为准
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📋 打卡记录 <span class="tag" id="recCount">0 天</span></h3>
+      <div id="recList"></div>
+    </div>
+
+    <div class="card">
+      <h3>☁️ 云同步 <span class="tag">填一次即可</span></h3>
+      <div class="fi">
+        <label>同步密钥（只存在你自己手机上）</label>
+        <input type="text" id="inToken" placeholder="ghp_ 开头的密钥" autocomplete="off">
+      </div>
+      <button class="btn sm" onclick="saveToken()">🔑 保存密钥并立即同步</button>
+      <div class="note">填好后打卡会自动上传云端；换手机/清缓存后重新填一次即可。</div>
+    </div>
+
+    <div class="card">
+      <h3>🔧 数据管理</h3>
+      <div class="row2">
+        <button class="btn sm ghost" onclick="copyReport()">📋 复制日报发群</button>
+        <button class="btn sm ghost" onclick="exportData()">💾 导出备份</button>
+      </div>
+      <div style="height:10px"></div>
+      <div class="row2">
+        <button class="btn sm ghost" onclick="document.getElementById('impFile').click()">📥 导入备份</button>
+        <button class="btn sm warn" onclick="clearAll()">🗑 清空本人记录</button>
+      </div>
+      <input type="file" id="impFile" accept=".json" class="hide" onchange="importData(event)">
+      <div class="note">数据保存在手机浏览器本地，换手机/清缓存前请先导出备份 💾</div>
+    </div>
+  </div>
+
+  <!-- ============ 曲线 ============ -->
+  <div class="view" id="v-chart">
+    <div class="card">
+      <h3>📈 体重曲线 <span class="tag" id="chartName"></span></h3>
+      <div id="chartBox"></div>
+      <div class="note">
+        🟣 实线＝实际体重　　🩷 虚线＝理想匀速达标线<br>
+        实际线在虚线下方 = 领先进度 👍
+      </div>
+    </div>
+    <div class="card">
+      <h3>📊 分段成果</h3>
+      <div id="weekTable"></div>
+    </div>
+  </div>
+
+  <!-- ============ 日历 ============ -->
+  <div class="view" id="v-cal">
+    <div class="card">
+      <h3>🗓 打卡日历 <span class="tag" id="calName"></span></h3>
+      <div class="cal" id="calGrid"></div>
+      <div class="note">
+        🟢 已打卡　　🔴 漏打卡　　⚪ 未来/未到<br>
+        目标：32天全勤打卡，漏打一次罚红包 🧧 由群里约定
+      </div>
+    </div>
+    <div class="card">
+      <h3>🏆 打卡统计</h3>
+      <div class="grid3">
+        <div class="box"><div class="v up" id="cDone">0</div><div class="l">已打卡(天)</div></div>
+        <div class="box"><div class="v down" id="cMiss">0</div><div class="l">漏打卡(天)</div></div>
+        <div class="box"><div class="v" id="cRate">0%</div><div class="l">打卡率</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 计划 ============ -->
+  <div class="view" id="v-plan">
+    <div class="card">
+      <h3>🎯 目标拆解</h3>
+      <table class="pt" id="planTable"></table>
+      <div class="note">※ 匀速达标法：总减重量 ÷ 32天，建议前两周多减一点，给平台期留缓冲。</div>
+    </div>
+
+    <div class="card">
+      <h3>🍽 每日饮食模板（约1400-1500 kcal）</h3>
+      <div class="plan-sec">
+        <h4>🌅 早餐 7:30-8:30（约350-400 kcal）</h4>
+        <ul>
+          <li>主食：全麦面包1-2片 / 燕麦40g / 玉米1根 / 红薯150g（四选一）</li>
+          <li>蛋白：水煮蛋1-2个 或 无糖豆浆300ml</li>
+          <li>加分：小番茄/黄瓜随意，黑咖啡1杯（消水肿）</li>
+        </ul>
+      </div>
+      <div class="plan-sec">
+        <h4>🍱 午餐 11:30-13:00（约500-550 kcal）</h4>
+        <ul>
+          <li>主食：米饭100g（一小碗）/ 杂粮饭更好</li>
+          <li>蛋白：鸡胸/鱼虾/牛肉/豆腐 150g（掌心大小）</li>
+          <li>蔬菜：绿叶菜 200g+（炒/拌/清蒸，少油）</li>
+          <li>顺序：先菜 → 再肉 → 最后饭，细嚼慢咽20分钟</li>
+        </ul>
+      </div>
+      <div class="plan-sec">
+        <h4>🥣 晚餐 18:00-19:30（约400-450 kcal）⚠️关键</h4>
+        <ul>
+          <li>19:30后不再进食，睡前3小时空腹</li>
+          <li>主食减半或不吃主食（用南瓜/山药代替）</li>
+          <li>蛋白+蔬菜为主：虾仁豆腐汤、鸡胸沙拉、番茄牛腩（少油）</li>
+          <li>饿了加餐：无糖酸奶 / 黄瓜 / 一小把坚果（10颗以内）</li>
+        </ul>
+      </div>
+      <div class="plan-sec">
+        <h4>💧 饮水与禁忌</h4>
+        <ul>
+          <li>每天喝水 2000ml（早起空腹1杯温水，餐前1杯）</li>
+          <li>🚫 奶茶/含糖饮料/果汁 —— 一杯奶茶≈跑步40分钟</li>
+          <li>🚫 油炸、火锅、烧烤、夜宵、酒精</li>
+          <li>🚫 精制零食：饼干、蛋糕、薯片</li>
+          <li>每周可留 1 顿「放松餐」（午餐吃，别在晚上）</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🏃‍♀️ 每周运动安排</h3>
+      <table class="pt">
+        <tr><th>星期</th><th>内容</th><th>时长</th></tr>
+        <tr><td>周一</td><td>快走 / 慢跑 / 跳绳</td><td>40分钟</td></tr>
+        <tr><td>周二</td><td>帕梅拉/周六野 全身燃脂</td><td>30分钟</td></tr>
+        <tr><td>周三</td><td>休息 / 拉伸瑜伽</td><td>20分钟</td></tr>
+        <tr><td>周四</td><td>快走 / 爬楼梯 / 椭圆机</td><td>40分钟</td></tr>
+        <tr><td>周五</td><td>臀腿+核心力量（深蹲/臀桥/平板）</td><td>35分钟</td></tr>
+        <tr><td>周六</td><td>户外活动：爬山/骑行/逛商场</td><td>60分钟+</td></tr>
+        <tr><td>周日</td><td>休息 + 称重复盘</td><td>—</td></tr>
+      </table>
+      <div class="note">
+        💡 新手不必强求高强度：<b>每天8000-10000步</b> 是底线，比什么都管用。<br>
+        💡 运动后别"补偿性进食"，出汗≠消耗很多热量。
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📜 打卡与罚款规则</h3>
+      <div class="plan-sec">
+        <h4>⚖️ 称重规则</h4>
+        <ul>
+          <li>每日 1 次，建议早起空腹、如厕后、穿同样衣物</li>
+          <li>同一台体重秤，放同一平整位置</li>
+          <li>当天上传体重 + 照片到本页面，含自动时间戳</li>
+        </ul>
+      </div>
+      <div class="plan-sec">
+        <h4>💰 罚款计算</h4>
+        <ul>
+          <li>到期日：<b>11月27日</b>（以当天晨重为准）</li>
+          <li>未达标罚款上限：<b>500 元</b></li>
+          <li>公式：罚款 = 未达标斤数 ÷ 应减斤数 × 500 元</li>
+          <li>例：杨莉荣应减7.8斤，若只减3.9斤 → 罚 (7.8-3.9)/7.8×500 = <b>250元</b></li>
+          <li>超额完成不奖励现金，奖励好身材 ✨</li>
+        </ul>
+      </div>
+      <div class="plan-sec">
+        <h4>🧧 附加约定（建议）</h4>
+        <ul>
+          <li>漏打卡 1 次 → 群里发 10 元红包</li>
+          <li>连续打卡 7 天 → 群友点赞 + 免发红包一次</li>
+          <li>中途放弃 / 数据造假 → 直接罚满 500 元</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>⚠️ 健康提醒</h3>
+      <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.9;color:#5c4a53;">
+        <li>健康减重速度：每周 1-2 斤，过快易反弹、伤代谢</li>
+        <li>体重每天波动 ±1kg 属正常（水分/盐分/生理期），看周均值趋势</li>
+        <li>生理期体重可能上涨 1-2 斤，别慌，过后再看</li>
+        <li>保证睡眠 7 小时，熬夜会显著影响减脂</li>
+        <li>出现头晕、乏力、停经等情况请立即停止并就医</li>
+      </ul>
+    </div>
+  </div>
+
+</main>
+
+<nav>
+  <button class="on" data-v="checkin" onclick="go('checkin')"><span class="ic">⚖️</span>打卡</button>
+  <button data-v="chart" onclick="go('chart')"><span class="ic">📈</span>曲线</button>
+  <button data-v="cal" onclick="go('cal')"><span class="ic">🗓</span>日历</button>
+  <button data-v="plan" onclick="go('plan')"><span class="ic">📋</span>计划</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ 基础配置 ============ */
+var START = '2026-10-27', END = '2026-11-27', FINE = 500;
+var PEOPLE = {
+  '杨莉荣': {start:60.9,  goal:57.0},
+  '李婷婷': {start:58.35, goal:55.0}
+};
+var cur = '杨莉荣';
+var photoData = '';
+var GIST_ID = 'f23e79ef9614839581d7737758225938';   // 云端数据仓（部署时写入）
+var ghToken = '';
+var syncing = false;
+
+/* ============ 云同步（GitHub Gist 作为后端） ============ */
+function urlParam(n){ var m=new RegExp('[?&]'+n+'=([^&]*)').exec(location.search); return m?decodeURIComponent(m[1]):''; }
+function getToken(){ if(!ghToken) ghToken = localStorage.getItem('wl_gh_token')||''; return ghToken; }
+function setToken(t){ ghToken=t; try{ localStorage.setItem('wl_gh_token',t); }catch(e){} }
+function setStatus(s){
+  var el=document.getElementById('syncStatus'); if(!el) return;
+  var map={ok:['已同步 ☁️','sync ok'], off:['离线·本地已存','sync off'], ing:['同步中…','sync ing'], none:['未开启','sync']};
+  var v=map[s]||map.none; el.textContent=v[0]; el.className=v[1];
+}
+function slim(db){   // 云端只传体重数据，照片留本机，省流量
+  var o={};
+  for(var p in db){
+    o[p]={records:{}};
+    var rs=(db[p]&&db[p].records)||{};
+    for(var d in rs){ var r=rs[d]; o[p].records[d]={w:r.w, t:r.t, ts:r.ts||0}; }
+  }
+  return o;
+}
+function mergeDB(base, inc){   // 以 ts 最新为准，保留本机照片
+  var out = JSON.parse(JSON.stringify(base||{}));
+  for(var p in (inc||{})){
+    if(!out[p]) out[p]={records:{}};
+    if(!out[p].records) out[p].records={};
+    var rs=(inc[p]&&inc[p].records)||{};
+    for(var d in rs){
+      var rb=rs[d], ra=out[p].records[d];
+      if(!ra){ out[p].records[d]=rb; }
+      else if((rb.ts||0)>(ra.ts||0)){ rb.photo=ra.photo||''; out[p].records[d]=rb; }
+      else if(!ra.photo && rb.photo){ ra.photo=rb.photo; }
+    }
+  }
+  return out;
+}
+function cloudGet(cb){
+  if(!GIST_ID || !getToken()){ cb(null); return; }
+  fetch('https://api.github.com/gists/'+GIST_ID, {
+    headers:{Authorization:'Bearer '+getToken(), 'Accept':'application/vnd.github+json',
+             'Cache-Control':'no-store'}
+  }).then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(g){ var f=g.files && g.files['data.json']; cb(f?JSON.parse(f.content):null); })
+    .catch(function(){ cb(null); });
+}
+function cloudPut(obj, cb){
+  if(!GIST_ID || !getToken()){ cb(false); return; }
+  fetch('https://api.github.com/gists/'+GIST_ID, {
+    method:'PATCH',
+    headers:{Authorization:'Bearer '+getToken(), 'Accept':'application/vnd.github+json', 'Content-Type':'application/json'},
+    body:JSON.stringify({files:{'data.json':{content:JSON.stringify(obj)}}})
+  }).then(function(r){ cb(r.ok); }).catch(function(){ cb(false); });
+}
+function syncNow(silent){
+  if(syncing || !GIST_ID || !getToken()){ setStatus(GIST_ID&&getToken()?'off':'none'); return; }
+  syncing=true; setStatus('ing');
+  cloudGet(function(remote){
+    if(remote===null){ syncing=false; setStatus('off'); if(!silent) toast('同步失败：网络或密钥有问题'); return; }
+    var local=loadAll();
+    var merged=mergeDB(local, remote);
+    saveAll(merged);
+    cloudPut(slim(merged), function(ok){
+      syncing=false; setStatus(ok?'ok':'off');
+      renderAll();
+      if(!silent) toast(ok?'☁️ 已同步，两人进度已互通':'上传失败，数据已存本机');
+    });
+  });
+}
+function saveToken(){
+  var t=(document.getElementById('inToken').value||'').trim();
+  if(!t){ toast('请先粘贴密钥'); return; }
+  setToken(t); toast('密钥已保存，正在同步…'); syncNow(false);
+}
+
+/* ============ 日期工具 ============ */
+function pad(n){return n<10?'0'+n:''+n;}
+function ymd(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function parseD(s){var a=s.split('-');return new Date(+a[0], +a[1]-1, +a[2]);}
+function diffDays(a,b){ return Math.round((parseD(b)-parseD(a))/86400000); }
+function totalDays(){ return diffDays(START, END); }        // 32
+function todayStr(){ return ymd(new Date()); }
+function nowTime(){ var d=new Date(); return pad(d.getHours())+':'+pad(d.getMinutes()); }
+
+/* ============ 数据存取 ============ */
+function loadAll(){
+  try{ return JSON.parse(localStorage.getItem('wl_challenge_v1')||'{}'); }catch(e){ return {}; }
+}
+function saveAll(db){
+  try{ localStorage.setItem('wl_challenge_v1', JSON.stringify(db)); return true; }
+  catch(e){ toast('存储空间不足，照片可能未保存，请导出备份'); return false; }
+}
+function recs(p){ var db=loadAll(); return (db[p]&&db[p].records)||{}; }
+function saveRec(p, date, obj){
+  var db=loadAll();
+  if(!db[p]) db[p]={records:{}};
+  if(!db[p].records) db[p].records={};
+  db[p].records[date]=obj; saveAll(db);
+}
+function delRec(p,date){ var db=loadAll(); if(db[p]&&db[p].records){delete db[p].records[date]; saveAll(db);} }
+
+/* ============ 计算 ============ */
+function sortedDates(p){
+  var r=recs(p), ks=Object.keys(r);
+  ks.sort(function(a,b){return a<b?-1:(a>b?1:0);});
+  return ks;
+}
+function latest(p){
+  var ks=sortedDates(p);
+  if(!ks.length) return null;
+  var k=ks[ks.length-1];
+  return {date:k, w:recs(p)[k].w, t:recs(p)[k].t};
+}
+function currentWeight(p){
+  // 优先用今天/最近一次打卡，否则用起始体重
+  var r=recs(p), ks=sortedDates(p);
+  if(!ks.length) return PEOPLE[p].start;
+  return r[ks[ks.length-1]].w;
+}
+function stats(p){
+  var cfg=PEOPLE[p];
+  var need = cfg.start - cfg.goal;        // kg
+  var curW = currentWeight(p);
+  var lost = cfg.start - curW;            // kg
+  var left = Math.max(0, curW - cfg.goal);
+  var rate = need>0 ? Math.max(0, Math.min(1, lost/need)) : 0;
+  var fine = Math.round((left*2)/(need*2)*FINE);
+  if(left<=0) fine=0;
+  return {need:need, cur:curW, lost:lost, left:left, rate:rate, fine:fine};
+}
+function expectedWeight(p, dateStr){
+  var cfg=PEOPLE[p], T=totalDays();
+  var d=diffDays(START, dateStr);
+  if(d<0) d=0; if(d>T) d=T;
+  return cfg.start - (cfg.start-cfg.goal)*(d/T);
+}
+
+/* ============ 渲染 ============ */
+function renderAll(){
+  renderHeader(); renderPK(); renderStats(); renderList(); renderChart(); renderCal(); renderPlanTable();
+}
+
+function renderHeader(){
+  var t=todayStr(), T=totalDays();
+  var left = Math.max(0, diffDays(t, END));
+  var passed = Math.min(T, Math.max(0, diffDays(START, t)));
+  document.getElementById('cdDays').textContent = left;
+  document.getElementById('rangeL').textContent = '📅 今天是第 ' + (passed+1) + ' / ' + (T+1) + ' 天';
+  document.getElementById('rangeR').textContent = '时间进度 ' + Math.round(passed/T*100) + '%';
+  document.getElementById('timeBar').style.width = (passed/T*100)+'%';
+  document.getElementById('tagDate').textContent = t;
+}
+
+function renderStats(){
+  var p=cur, cfg=PEOPLE[p], s=stats(p), T=totalDays();
+  document.getElementById('tagName').textContent = p;
+  document.getElementById('sCur').textContent = s.cur.toFixed(2);
+  document.getElementById('sLost').textContent = (s.lost*2).toFixed(1);
+  document.getElementById('sLeft').textContent = (s.left*2).toFixed(1);
+  document.getElementById('progBar').style.width = (s.rate*100)+'%';
+  document.getElementById('pStart').textContent = '起点 '+cfg.start;
+  document.getElementById('pNow').textContent = '已完成 '+Math.round(s.rate*100)+'%';
+  document.getElementById('pGoal').textContent = '目标 '+cfg.goal;
+
+  // 节奏提示
+  var passed = Math.max(0, diffDays(START, todayStr()));
+  var shouldLost = (cfg.start-cfg.goal)*(passed/T)*2;   // 斤
+  var diff = s.lost*2 - shouldLost;
+  var txt='';
+  if(passed===0){ txt='🎬 第一天，先记下起始体重，冲鸭！'; }
+  else if(diff>=0.3){ txt='🚀 领先节奏 <b class="up">'+diff.toFixed(1)+'斤</b>，保持住！'; }
+  else if(diff<=-0.3){ txt='⚠️ 落后节奏 <b class="down">'+Math.abs(diff).toFixed(1)+'斤</b>，今晚主食减半～'; }
+  else { txt='✅ 节奏刚好，稳住就是胜利！'; }
+  txt += '<br>📌 截至今日应减 '+shouldLost.toFixed(1)+' 斤，实际已减 '+(s.lost*2).toFixed(1)+' 斤';
+  document.getElementById('paceTxt').innerHTML = txt;
+
+  // 罚款
+  document.getElementById('fineNow').textContent = s.fine;
+  document.getElementById('fineCap').textContent = s.left<=0
+    ? '🎉 已达成目标，0 罚款！'
+    : '还差 '+(s.left*2).toFixed(1)+' 斤，每斤约 ¥'+((FINE)/(s.need*2)).toFixed(1);
+  document.getElementById('fmlDetail').innerHTML =
+    '应减 '+(s.need*2).toFixed(1)+' 斤 ｜ 未达标 '+(s.left*2).toFixed(1)+' 斤 ｜ 完成率 '+Math.round(s.rate*100)+'%';
+}
+
+function renderList(){
+  var p=cur, box=document.getElementById('recList'), ks=sortedDates(p), r=recs(p);
+  document.getElementById('recCount').textContent = ks.length+' 天';
+  if(!ks.length){ box.innerHTML='<div class="note" style="text-align:center;padding:14px">还没有记录，今天开始吧 💪</div>'; return; }
+  var h='';
+  for(var i=ks.length-1;i>=0;i--){
+    var k=ks[i], rec=r[k];
+    var prev = i>0 ? r[ks[i-1]].w : PEOPLE[p].start;
+    var ch = rec.w - prev;
+    var chTxt = Math.abs(ch)<0.001 ? '<span class="muted">持平</span>'
+      : (ch<0 ? '<span class="up">↓'+(Math.abs(ch)*2).toFixed(1)+'斤</span>'
+              : '<span class="down">↑'+(ch*2).toFixed(1)+'斤</span>');
+    var pic = rec.photo ? '<img class="pic" src="'+rec.photo+'" onclick="window.open(this.src)">' : '<span style="width:38px"></span>';
+    h += '<div class="rec">'
+      + '<span class="d">'+k.slice(5)+'<br><span style="font-size:10px">'+(rec.t||'')+'</span></span>'
+      + '<span class="w">'+rec.w.toFixed(2)+'</span>'
+      + pic
+      + '<span class="ch">'+chTxt+'</span>'
+      + '<span class="del" onclick="del(\''+k+'\')">✕</span>'
+      + '</div>';
+  }
+  box.innerHTML=h;
+}
+
+function renderChart(){
+  var p=cur, cfg=PEOPLE[p], r=recs(p), ks=sortedDates(p);
+  document.getElementById('chartName').textContent=p;
+  var W=330,H=190,PL=38,PR=10,PT=14,PB=26;
+  if(ks.length<1){ document.getElementById('chartBox').innerHTML='<div class="note" style="text-align:center;padding:30px">📈 打卡 2 天以上自动生成曲线</div>'; document.getElementById('weekTable').innerHTML=''; return; }
+
+  // 数据点：起始 + 所有记录
+  var pts=[{d:START,w:cfg.start}];
+  for(var i=0;i<ks.length;i++){ if(ks[i]!==START) pts.push({d:ks[i],w:r[ks[i]].w}); }
+  var T=totalDays();
+  var ws=[]; pts.forEach(function(o){ws.push(o.w);});
+  var mn=Math.min.apply(null,ws.concat([cfg.goal]))-0.5, mx=Math.max.apply(null,ws)+0.5;
+  if(mx-mn<1.5){mx=mn+1.5;}
+  function X(dstr){ return PL + (diffDays(START,dstr)/T)*(W-PL-PR); }
+  function Y(w){ return PT + (mx-w)/(mx-mn)*(H-PT-PB); }
+
+  var s='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block">';
+  // 网格 + Y轴
+  for(var g=0;g<=4;g++){
+    var yy=PT+(H-PT-PB)*g/4, vv=mx-(mx-mn)*g/4;
+    s+='<line x1="'+PL+'" y1="'+yy+'" x2="'+(W-PR)+'" y2="'+yy+'" stroke="#ffe4ee" stroke-width="1"/>';
+    s+='<text x="'+(PL-5)+'" y="'+(yy+3.5)+'" font-size="9" fill="#c9b6bf" text-anchor="end">'+vv.toFixed(1)+'</text>';
+  }
+  // 目标线
+  s+='<line x1="'+PL+'" y1="'+Y(cfg.goal)+'" x2="'+(W-PR)+'" y2="'+Y(cfg.goal)+'" stroke="#ff7eb3" stroke-width="1.5" stroke-dasharray="4 3"/>';
+  s+='<text x="'+(W-PR)+'" y="'+(Y(cfg.goal)-4)+'" font-size="9" fill="#ff7eb3" text-anchor="end">目标 '+cfg.goal+'</text>';
+  // 理想匀速线
+  s+='<line x1="'+X(START)+'" y1="'+Y(cfg.start)+'" x2="'+X(END)+'" y2="'+Y(cfg.goal)+'" stroke="#c4b5fd" stroke-width="1" stroke-dasharray="2 3"/>';
+  // 实际折线
+  var dpath='', area='M '+X(pts[0].d)+' '+Y(pts[0].w);
+  for(var j=0;j<pts.length;j++){
+    var x=X(pts[j].d), y=Y(pts[j].w);
+    dpath += (j===0?'M':'L')+x+' '+y+' ';
+    area += ' L'+x+' '+y;
+  }
+  s+='<path d="'+area+' L'+X(pts[pts.length-1].d)+' '+(H-PB)+' L'+X(pts[0].d)+' '+(H-PB)+' Z" fill="rgba(167,139,250,.12)"/>';
+  s+='<path d="'+dpath+'" fill="none" stroke="#a78bfa" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+  for(var m=0;m<pts.length;m++){
+    s+='<circle cx="'+X(pts[m].d)+'" cy="'+Y(pts[m].w)+'" r="3" fill="#fff" stroke="#a78bfa" stroke-width="2"/>';
+  }
+  // X轴标签
+  [START, '2026-11-05', '2026-11-15', '2026-11-27'].forEach(function(dd,i){
+    s+='<text x="'+X(dd)+'" y="'+(H-8)+'" font-size="8.5" fill="#c9b6bf" text-anchor="middle">'+dd.slice(5)+'</text>';
+  });
+  s+='</svg>';
+  document.getElementById('chartBox').innerHTML=s;
+
+  // 分段表
+  var wt='<table class="pt"><tr><th>节点</th><th>日期</th><th>应达(kg)</th><th>实际(kg)</th><th>评价</th></tr>';
+  var marks=[['第1周','2026-11-02'],['第2周','2026-11-09'],['第3周','2026-11-16'],['第4周','2026-11-23'],['终点','2026-11-27']];
+  for(var n=0;n<marks.length;n++){
+    var md=marks[n][1], exp=expectedWeight(p,md);
+    var act='';
+    for(var q=0;q<ks.length;q++){ if(ks[q]<=md) act=r[ks[q]].w; }
+    var aTxt = act===''?'—':act.toFixed(2);
+    var ev='—';
+    if(act!==''){ ev = act<=exp ? '<span class="up">✔ 达标</span>' : '<span class="down">差'+((act-exp)*2).toFixed(1)+'斤</span>'; }
+    wt+='<tr><td>'+marks[n][0]+'</td><td>'+md.slice(5)+'</td><td>'+exp.toFixed(2)+'</td><td>'+aTxt+'</td><td>'+ev+'</td></tr>';
+  }
+  wt+='</table><div class="note">「应达」按匀速推算，前期超额后期更轻松 💪</div>';
+  document.getElementById('weekTable').innerHTML=wt;
+}
+
+function renderCal(){
+  var p=cur, r=recs(p);
+  document.getElementById('calName').textContent=p;
+  var grid=document.getElementById('calGrid');
+  var h='';
+  ['日','一','二','三','四','五','六'].forEach(function(w){h+='<div class="hd">'+w+'</div>';});
+  var s=parseD(START), e=parseD(END), t=todayStr();
+  var d=new Date(s);
+  // 前面补空
+  for(var k=0;k<d.getDay();k++) h+='<div class="cell out"></div>';
+  var done=0, miss=0;
+  while(d<=e){
+    var ds=ymd(d);
+    var cls='cell';
+    if(d>t){} else if(r[ds]){ cls+=' done'; done++; }
+    else if(ds<t){ cls+=' miss'; miss++; }
+    if(ds===t) cls+=' today';
+    var w = r[ds] ? '<i>'+r[ds].w.toFixed(1)+'</i>' : '';
+    h+='<div class="'+cls+'"><b>'+d.getDate()+'</b>'+w+'</div>';
+    d=new Date(d.getFullYear(), d.getMonth(), d.getDate()+1);
+  }
+  grid.innerHTML=h;
+  document.getElementById('cDone').textContent=done;
+  document.getElementById('cMiss').textContent=miss;
+  var tot=done+miss;
+  document.getElementById('cRate').textContent = tot? Math.round(done/tot*100)+'%':'—';
+}
+
+function renderPlanTable(){
+  var h='<tr><th>姓名</th><th>起始</th><th>目标</th><th>应减(斤)</th><th>每天</th><th>每周</th><th>每斤价</th></tr>';
+  ['杨莉荣','李婷婷'].forEach(function(p){
+    var c=PEOPLE[p], need=(c.start-c.goal)*2;
+    h+='<tr><td>'+p+'</td><td>'+c.start+'</td><td>'+c.goal+'</td><td><b>'+need.toFixed(1)+'</b></td>'
+      +'<td>'+(need/32).toFixed(2)+'斤</td><td>'+(need/32*7).toFixed(2)+'斤</td><td>¥'+(FINE/need).toFixed(1)+'</td></tr>';
+  });
+  document.getElementById('planTable').innerHTML=h;
+}
+
+function renderPK(){
+  var box=document.getElementById('pkBox'); if(!box) return;
+  var names=['杨莉荣','李婷婷'], h='', rates={};
+  names.forEach(function(p){
+    var s=stats(p); rates[p]=s.rate;
+    var last=latest(p);
+    h+='<div class="pk">'
+      + '<span class="who">'+(p==='杨莉荣'?'🌸':'🍀')+'<br>'+p+'</span>'
+      + '<span class="pb"><i style="width:'+Math.round(s.rate*100)+'%"></i></span>'
+      + '<span class="num">已减'+(s.lost*2).toFixed(1)+'斤<br>'+Math.round(s.rate*100)+'% · 罚¥'+s.fine+'</span>'
+      + '</div>';
+  });
+  var a=rates['杨莉荣'], b=rates['李婷婷'];
+  var lead = Math.abs(a-b)<0.001 ? '🤝 暂时平手' : (a>b?'🌸 杨莉荣 领先':'🍀 李婷婷 领先');
+  var gap = Math.abs(a-b)*((PEOPLE['杨莉荣'].start-PEOPLE['杨莉荣'].goal)*2);
+  h+='<div style="text-align:center;font-size:13px;margin-top:12px;font-weight:800;color:var(--pink)">'
+    + lead + (Math.abs(a-b)<0.001?'':'　（差 '+gap.toFixed(1)+' 斤）') + ' 👑</div>';
+  box.innerHTML=h;
+
+  var on = !!(GIST_ID && getToken());
+  document.getElementById('syncNote').innerHTML = on
+    ? '☁️ 云同步已开启：打卡自动上传，两人实时互通'
+    : '⚠️ 未开启云同步，当前只看得到本机数据。去下方「☁️ 云同步」填密钥';
+}
+
+/* ============ 交互 ============ */
+function switchPerson(p){
+  cur=p;
+  var bs=document.querySelectorAll('.pbtn');
+  for(var i=0;i<bs.length;i++){ bs[i].className = (bs[i].getAttribute('data-p')===p)?'pbtn on':'pbtn'; }
+  clearForm(); renderAll();
+}
+function go(v){
+  var vs=document.querySelectorAll('.view');
+  for(var i=0;i<vs.length;i++) vs[i].className = (vs[i].id==='v-'+v)?'view on':'view';
+  var ns=document.querySelectorAll('nav button');
+  for(var j=0;j<ns.length;j++) ns[j].className = (ns[j].getAttribute('data-v')===v)?'on':'';
+  window.scrollTo(0,0);
+}
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast on';
+  setTimeout(function(){t.className='toast';},2200);
+}
+function onPhoto(e){
+  var f=e.target.files[0]; if(!f) return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    var img=new Image();
+    img.onload=function(){
+      var max=480, w=img.width, hh=img.height;
+      if(w>max){ hh=hh*max/w; w=max; }
+      var cv=document.createElement('canvas'); cv.width=w; cv.height=hh;
+      cv.getContext('2d').drawImage(img,0,0,w,hh);
+      photoData=cv.toDataURL('image/jpeg',0.6);
+      document.getElementById('photoPrev').innerHTML='<img src="'+photoData+'"><div class="thumb-del" onclick="delPhoto(event)">移除照片</div>';
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(f);
+}
+function delPhoto(e){ e.stopPropagation(); photoData=''; document.getElementById('photoPrev').innerHTML=''; document.getElementById('photo').value=''; }
+function clearForm(){
+  photoData=''; document.getElementById('photoPrev').innerHTML='';
+  document.getElementById('photo').value='';
+  document.getElementById('inW').value='';
+  document.getElementById('inD').value=todayStr();
+  document.getElementById('inT').value=nowTime();
+}
+function submit(){
+  var w=parseFloat(document.getElementById('inW').value);
+  if(!w||w<30||w>150){ toast('请输入有效体重（30-150kg）'); return; }
+  var d=document.getElementById('inD').value||todayStr();
+  var t=document.getElementById('inT').value||nowTime();
+  saveRec(cur, d, {w:Math.round(w*100)/100, t:t, photo:photoData||'', ts:new Date().getTime()});
+  toast('✅ '+d.slice(5)+' 打卡成功 '+w.toFixed(2)+'kg');
+  clearForm(); renderAll(); syncNow(true);
+}
+function del(date){
+  if(!confirm('删除 '+date+' 的记录？')) return;
+  delRec(cur,date); renderAll(); toast('已删除');
+}
+function clearAll(){
+  if(!confirm('确定清空 '+cur+' 的全部记录？不可恢复！')) return;
+  var db=loadAll(); if(db[cur]) db[cur].records={}; saveAll(db); renderAll(); toast('已清空');
+}
+function copyReport(){
+  var s=stats(cur), cfg=PEOPLE[cur], t=todayStr();
+  var txt='🍑 减重打卡 '+t+'\n👤 '+cur+'\n⚖️ 今日 '+s.cur.toFixed(2)+'kg（起点'+cfg.start+' → 目标'+cfg.goal+'）\n'
+    +'📉 累计已减 '+(s.lost*2).toFixed(1)+' 斤 / 应减 '+(s.need*2).toFixed(1)+' 斤\n'
+    +'🎯 完成率 '+Math.round(s.rate*100)+'%\n💸 当前预估罚款 ¥'+s.fine+'\n💪 还差 '+(s.left*2).toFixed(1)+' 斤，冲！';
+  if(navigator.clipboard){ navigator.clipboard.writeText(txt).then(function(){toast('已复制，去群里粘贴吧～');},function(){fallbackCopy(txt);}); }
+  else fallbackCopy(txt);
+}
+function fallbackCopy(txt){
+  var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select();
+  try{document.execCommand('copy'); toast('已复制～');}catch(e){toast('复制失败，请手动截图');}
+  document.body.removeChild(ta);
+}
+function exportData(){
+  var db=loadAll();
+  var blob=new Blob([JSON.stringify(db)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='减重打卡备份_'+todayStr()+'.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast('已导出备份文件');
+}
+function importData(e){
+  var f=e.target.files[0]; if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(ev){
+    try{
+      var db=JSON.parse(ev.target.result);
+      var old=loadAll();
+      for(var p in db){ if(!old[p]) old[p]=db[p]; else { for(var d in (db[p].records||{})) old[p].records[d]=db[p].records[d]; } }
+      saveAll(old); renderAll(); toast('导入成功 ✅');
+    }catch(err){ toast('文件格式不对哦'); }
+  };
+  rd.readAsText(f);
+  e.target.value='';
+}
+
+/* ============ 环境检测 ============ */
+function envCheck(){
+  var ua = navigator.userAgent || '';
+  var isWeixin = /MicroMessenger/i.test(ua);
+  var storeOk = true;
+  try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); }catch(e){ storeOk=false; }
+  var msg = '';
+  if(isWeixin){ msg = '当前是<b>微信内置浏览器</b>，打卡记录可能无法保存。请点右上角「···」→「在浏览器打开」（Safari / Chrome）'; }
+  else if(!storeOk){ msg = '当前浏览器禁用了本地存储，记录保存不了。请换 Safari 或 Chrome 打开本文件'; }
+  if(msg){
+    var b=document.createElement('div');
+    b.style.cssText='background:#fff7ed;border:1px solid #fdba74;color:#c2410c;padding:10px 12px;border-radius:12px;font-size:12.5px;line-height:1.7;margin:10px 14px 0';
+    b.innerHTML='⚠️ '+msg+'<br>💡 推荐：用系统浏览器打开后，点「分享/菜单 → 添加到主屏幕」，以后一点就开';
+    document.body.insertBefore(b, document.querySelector('.pswitch'));
+  }
+}
+
+/* ============ 初始化 ============ */
+(function(){
+  var g=urlParam('g'); if(g) GIST_ID=g;
+  var k=urlParam('k');
+  if(k){ setToken(k); var el=document.getElementById('inToken'); if(el) el.value=k; }
+})();
+clearForm();
+envCheck();
+renderAll();
+if(GIST_ID && getToken()) syncNow(true); else setStatus('none');
+// 每 2 分钟拉一次云端，看看对方有没有打卡
+setInterval(function(){ if(GIST_ID && getToken() && !syncing) syncNow(true); }, 120000);
+setInterval(function(){ document.getElementById('inT').value=nowTime(); }, 30000);
+</script>
+</body>
+</html>
