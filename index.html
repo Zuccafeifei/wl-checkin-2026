@@ -181,6 +181,12 @@
   .retry{display:block; width:100%; margin-top:8px; padding:9px; border-radius:10px;
     border:1px dashed #f0a6b8; background:#fffafc; color:var(--pink); font-size:13px; font-weight:700; cursor:pointer;}
   .retry:active{background:#ffeef4;}
+  /* ===== 漏打卡提醒条 ===== */
+  .remind{border-radius:14px; padding:11px 14px; font-size:13px; line-height:1.75; margin:10px 14px 0; font-weight:600;}
+  .remind.miss{background:#fff1f2; border:1px solid #fecdd3; color:#be123c;}
+  .remind.warn{background:#fffbeb; border:1px solid #fde68a; color:#92400e;}
+  .remind.good{background:#ecfdf5; border:1px solid #a7f3d0; color:#047857;}
+  .remind:active{opacity:.75;}
   .pkmini{display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:12.5px;}
   .pkmini:last-of-type{border-bottom:none;}
   .pkmini .w1{width:74px; font-weight:700; flex:none;}
@@ -218,6 +224,7 @@
 
   <!-- ============ 打卡 ============ -->
   <div class="view on" id="v-checkin">
+    <div id="missRemind"></div>
     <div class="card">
       <h3>🏆 实时 PK 榜 <span id="syncStatus" class="sync" onclick="syncNow(false)" style="cursor:pointer">未开启</span></h3>
       <div id="pkBox"></div>
@@ -284,6 +291,7 @@
       </div>
       <button class="btn sm" onclick="saveToken()">🔑 保存密钥并立即同步</button>
       <button class="retry" onclick="syncNow(false)">🔄 立即重试同步（补传本机记录）</button>
+      <button class="retry" onclick="enableNotify()" style="border-color:#a7f3d0;background:#f0fdf6;color:#047857">🔔 开启晚 20 点漏打卡提醒</button>
       <div class="note" id="lastSyncNote">填好后打卡会自动上传云端；换手机/清缓存后重新填一次即可。</div>
     </div>
 
@@ -467,7 +475,7 @@ var PEOPLE = {
 };
 var cur = '杨莉荣';
 var photoData = '';
-var GIST_ID = '__GIST_ID__';   // 云端数据仓（部署时写入）
+var GIST_ID = 'f23e79ef9614839581d7737758225938';   // 云端数据仓（真实 ID，勿改）
 var ghToken = '';
 var syncing = false;
 
@@ -521,14 +529,15 @@ function mergeDB(base, inc){   // 以 ts 最新为准，保留本机照片
   }
   return out;
 }
+function gistOk(){ return !!GIST_ID && GIST_ID.indexOf('__') !== 0; }
 function cloudGet(cb){
-  if(!GIST_ID || !getToken()){ cb(null); return; }
+  if(!gistOk() || !getToken()){ cb(null, 'cfg'); return; }
   fetch('https://api.github.com/gists/'+GIST_ID, {
     headers:{Authorization:'Bearer '+getToken(), 'Accept':'application/vnd.github+json',
              'Cache-Control':'no-store'}
-  }).then(function(r){ if(!r.ok) throw 0; return r.json(); })
-    .then(function(g){ var f=g.files && g.files['data.json']; cb(f?JSON.parse(f.content):null); })
-    .catch(function(){ cb(null); });
+  }).then(function(r){ if(!r.ok){ cb(null, r.status); return null; } return r.json(); })
+    .then(function(g){ if(!g) return; var f=g.files && g.files['data.json']; cb(f?JSON.parse(f.content):{}, 200); })
+    .catch(function(){ cb(null, 'net'); });
 }
 function cloudPut(obj, cb){
   if(!GIST_ID || !getToken()){ cb(false); return; }
@@ -539,10 +548,21 @@ function cloudPut(obj, cb){
   }).then(function(r){ cb(r.ok); }).catch(function(){ cb(false); });
 }
 function syncNow(silent){
-  if(syncing || !GIST_ID || !getToken()){ setStatus(GIST_ID&&getToken()?'off':'none'); return; }
+  if(syncing || !gistOk() || !getToken()){ setStatus(gistOk()&&getToken()?'off':'none'); return; }
   syncing=true; setStatus('ing');
-  cloudGet(function(remote){
-    if(remote===null){ syncing=false; setStatus('off'); if(!silent) toast('同步失败：网络或密钥有问题'); return; }
+  cloudGet(function(remote, err){
+    if(remote===null){
+      syncing=false; setStatus('off');
+      if(!silent){
+        var m = (err==='net') ? '🌐 连不上云端（网络不通）→ 已存本机，联网自动补传'
+              : (err===401) ? '🔑 密钥无效/已过期 → 请到「☁️云同步」重填'
+              : (err===404) ? '⚠️ 数据库地址无效 → 联系管理员'
+              : (err==='cfg') ? '⚠️ 页面未配置密钥 → 到「☁️云同步」填一下'
+              : ('同步失败（'+err+'）→ 已存本机');
+        toast(m);
+      }
+      return;
+    }
     var local=loadAll();
     var merged=mergeDB(local, remote);
     saveAll(merged);
@@ -625,7 +645,79 @@ function expectedWeight(p, dateStr){
 
 /* ============ 渲染 ============ */
 function renderAll(){
-  renderHeader(); renderPK(); renderStats(); renderList(); renderChart(); renderCal(); renderPlanTable();
+  renderHeader(); renderPK(); renderMiss(); renderStats(); renderList(); renderChart(); renderCal(); renderPlanTable();
+}
+
+/* ============ 漏打卡提醒 ============ */
+function recsOf(p){ var db=loadAll(); return (db[p] && db[p].records) || {}; }
+function missedDates(p){            // 从开始日到今天，所有没打卡的日期
+  var rs=recsOf(p), out=[], today=todayStr();
+  if(diffDays(START, today) < 0) return out;
+  var last = diffDays(END, today) >= 0 ? today : END;
+  var d = parseD(START), stop = parseD(last);
+  while(d <= stop){ var s=ymd(d); if(!rs[s]) out.push(s); d.setDate(d.getDate()+1); }
+  return out;
+}
+function streak(p){                 // 连续打卡天数
+  var rs=recsOf(p), n=0, d=new Date();
+  if(!rs[ymd(d)]) d.setDate(d.getDate()-1);
+  while(rs[ymd(d)]){ n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+function scrollToForm(){
+  go('checkin');
+  var e=document.getElementById('inW');
+  if(e){ setTimeout(function(){ e.scrollIntoView({behavior:'smooth',block:'center'}); try{e.focus();}catch(x){} },120); }
+}
+function renderMiss(){
+  var el=document.getElementById('missRemind'); if(!el) return;
+  var rs=recsOf(cur), today=todayStr(), hr=new Date().getHours();
+  var inRange = diffDays(START,today)>=0 && diffDays(today,END)>=0;
+  if(!inRange){ el.innerHTML=''; return; }
+  var all=missedDates(cur);
+  var past=[]; for(var i=0;i<all.length;i++){ if(all[i]!==today) past.push(all[i]); }
+  var doneToday=!!rs[today], h='';
+  if(doneToday){
+    if(past.length){
+      var show=past.slice(-3).map(function(x){return x.slice(5).replace('-','/');}).join('、');
+      h='<div class="remind warn" onclick="go(\'cal\')">✅ 今天已打卡　<span style="font-weight:400">但之前漏了 <b>'+past.length+
+        '</b> 天（'+show+(past.length>3?' 等':'')+'）<br>漏打卡按约定要发红包 🧧 → 点这里去补记</span></div>';
+    }else{
+      h='<div class="remind good">🔥 连续打卡 <b>'+streak(cur)+'</b> 天，一天没漏！保持住 💪</div>';
+    }
+  }else{
+    var late = hr>=20;
+    h='<div class="remind '+(late?'miss':'warn')+'" onclick="scrollToForm()">'+(late?'🚨':'⏰')+
+      ' <b>今天 '+today.slice(5).replace('-','/')+' 还没打卡！</b><br><span style="font-weight:400">'+
+      (late?'今晚就结束了，再不记就算漏一天（要发红包 🧧）':'起床空腹称一次最准，30 秒搞定')+
+      ' → 点这里去称重</span>'+
+      (past.length?'<br><span style="font-weight:400">另外之前还漏了 '+past.length+' 天</span>':'')+
+      '</div>';
+  }
+  el.innerHTML=h;
+}
+function enableNotify(){
+  if(!('Notification' in window)){ toast('这个浏览器不支持系统通知'); return; }
+  if(Notification.permission==='granted'){
+    try{ localStorage.setItem('wl_notify','1'); }catch(e){}
+    toast('🔔 已开启，晚上 20 点还没打卡会提醒你'); return;
+  }
+  Notification.requestPermission().then(function(p){
+    if(p==='granted'){ try{ localStorage.setItem('wl_notify','1'); }catch(e){} toast('🔔 已开启晚间提醒'); }
+    else toast('未授权通知权限');
+  });
+}
+function notifyCheck(){
+  if(!('Notification' in window)) return;
+  var on=false; try{ on=localStorage.getItem('wl_notify')==='1'; }catch(e){}
+  if(!on || Notification.permission!=='granted') return;
+  var d=new Date(); if(d.getHours()<20) return;
+  var t=todayStr(), done=false;
+  try{ done=localStorage.getItem('wl_notified_'+t)==='1'; }catch(e){}
+  if(done) return;
+  if(recsOf(cur)[t]) return;
+  try{ localStorage.setItem('wl_notified_'+t,'1'); }catch(e){}
+  try{ new Notification('⚖️ 今天还没打卡！', {body:t.slice(5).replace('-','/')+' 还没记录体重，快去称重～ 漏打卡要发红包 💸'}); }catch(e){}
 }
 
 function renderHeader(){
@@ -952,9 +1044,11 @@ function envCheck(){
 clearForm();
 envCheck();
 renderAll();
-if(GIST_ID && getToken()) syncNow(true); else setStatus('none');
+if(gistOk() && getToken()) syncNow(true); else setStatus('none');
 // 每 2 分钟拉一次云端，看看对方有没有打卡
-setInterval(function(){ if(GIST_ID && getToken() && !syncing) syncNow(true); }, 120000);
+setInterval(function(){ if(gistOk() && getToken() && !syncing) syncNow(true); }, 120000);
+// 每 10 分钟检查一次：晚上 20 点后还没打卡就发系统通知
+setInterval(notifyCheck, 600000); setTimeout(notifyCheck, 5000);
 setInterval(function(){ document.getElementById('inT').value=nowTime(); }, 30000);
 </script>
 </body>
