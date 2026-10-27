@@ -177,6 +177,10 @@
   .sync.ok{background:#e8fbf3; color:#0f9d63;}
   .sync.off{background:#fff1f2; color:#e0707a;}
   .sync.ing{background:#fff7ed; color:#c2410c;}
+  .sync.pending{background:#fef3c7; color:#b45309;}
+  .retry{display:block; width:100%; margin-top:8px; padding:9px; border-radius:10px;
+    border:1px dashed #f0a6b8; background:#fffafc; color:var(--pink); font-size:13px; font-weight:700; cursor:pointer;}
+  .retry:active{background:#ffeef4;}
   .pkmini{display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:12.5px;}
   .pkmini:last-of-type{border-bottom:none;}
   .pkmini .w1{width:74px; font-weight:700; flex:none;}
@@ -215,9 +219,10 @@
   <!-- ============ 打卡 ============ -->
   <div class="view on" id="v-checkin">
     <div class="card">
-      <h3>🏆 实时 PK 榜 <span id="syncStatus" class="sync">未开启</span></h3>
+      <h3>🏆 实时 PK 榜 <span id="syncStatus" class="sync" onclick="syncNow(false)" style="cursor:pointer">未开启</span></h3>
       <div id="pkBox"></div>
       <div class="note" id="syncNote">☁️ 开启云同步后，两人进度实时互通</div>
+      <div class="note" id="pendingNote" style="display:none;background:#fffbeb;border:1px solid #fde68a;color:#92400e"></div>
     </div>
 
     <div class="card">
@@ -278,7 +283,8 @@
         <input type="text" id="inToken" placeholder="ghp_ 开头的密钥" autocomplete="off">
       </div>
       <button class="btn sm" onclick="saveToken()">🔑 保存密钥并立即同步</button>
-      <div class="note">填好后打卡会自动上传云端；换手机/清缓存后重新填一次即可。</div>
+      <button class="retry" onclick="syncNow(false)">🔄 立即重试同步（补传本机记录）</button>
+      <div class="note" id="lastSyncNote">填好后打卡会自动上传云端；换手机/清缓存后重新填一次即可。</div>
     </div>
 
     <div class="card">
@@ -461,7 +467,7 @@ var PEOPLE = {
 };
 var cur = '杨莉荣';
 var photoData = '';
-var GIST_ID = 'f23e79ef9614839581d7737758225938';   // 云端数据仓（部署时写入）
+var GIST_ID = '__GIST_ID__';   // 云端数据仓（部署时写入）
 var ghToken = '';
 var syncing = false;
 
@@ -472,7 +478,24 @@ function setToken(t){ ghToken=t; try{ localStorage.setItem('wl_gh_token',t); }ca
 function setStatus(s){
   var el=document.getElementById('syncStatus'); if(!el) return;
   var map={ok:['已同步 ☁️','sync ok'], off:['离线·本地已存','sync off'], ing:['同步中…','sync ing'], none:['未开启','sync']};
-  var v=map[s]||map.none; el.textContent=v[0]; el.className=v[1];
+  var v=map[s]||map.none, txt=v[0], cls=v[1];
+  if(s==='off'){ var n=pendingCount(); if(n>0){ txt='📤 待传 '+n+' 条'; cls='sync pending'; } }
+  el.textContent=txt; el.className=cls;
+  var pn=document.getElementById('pendingNote');
+  if(pn){
+    if(s==='off' && pendingCount()>0){
+      pn.style.display='block';
+      pn.innerHTML='📦 有 <b>'+pendingCount()+'</b> 条记录存在本机还没上传，别担心 —— 网络恢复后打开页面（或点上面的状态）会自动补传，<b>不用重新填</b>。';
+    }else if(s==='ok'){ pn.style.display='none'; }
+    else if(s==='off'){ pn.style.display='none'; }
+  }
+}
+function pendingCount(){
+  var last=0; try{ last=+(localStorage.getItem('wl_last_sync')||0); }catch(e){}
+  var db=loadAll(), n=0;
+  for(var p in db){ var rs=(db[p]&&db[p].records)||{};
+    for(var d in rs){ if((rs[d].ts||0)>last) n++; } }
+  return n;
 }
 function slim(db){   // 云端只传体重数据，照片留本机，省流量
   var o={};
@@ -524,7 +547,9 @@ function syncNow(silent){
     var merged=mergeDB(local, remote);
     saveAll(merged);
     cloudPut(slim(merged), function(ok){
-      syncing=false; setStatus(ok?'ok':'off');
+      syncing=false;
+      if(ok){ try{ localStorage.setItem('wl_last_sync', String(Date.now())); }catch(e){} }
+      setStatus(ok?'ok':'off');
       renderAll();
       if(!silent) toast(ok?'☁️ 已同步，两人进度已互通':'上传失败，数据已存本机');
     });
@@ -791,9 +816,17 @@ function renderPK(){
   box.innerHTML=h;
 
   var on = !!(GIST_ID && getToken());
-  document.getElementById('syncNote').innerHTML = on
-    ? '☁️ 云同步已开启：打卡自动上传，两人实时互通'
-    : '⚠️ 未开启云同步，当前只看得到本机数据。去下方「☁️ 云同步」填密钥';
+  var pn = pendingCount();
+  document.getElementById('syncNote').innerHTML = !on
+    ? '⚠️ 未开启云同步，当前只看得到本机数据。去下方「☁️ 云同步」填密钥'
+    : (pn>0 ? '📦 有 <b>'+pn+'</b> 条记录存在本机待上传，联网后自动补传，<b>不用重新填</b>' : '☁️ 云同步已开启：打卡自动上传，两人实时互通');
+  var ln=document.getElementById('lastSyncNote');
+  if(ln){
+    var ls=0; try{ ls=+(localStorage.getItem('wl_last_sync')||0); }catch(e){}
+    ln.innerHTML = ls
+      ? '上次成功上传：'+new Date(ls).toLocaleString('zh-CN')+'　（本机待传 '+pn+' 条）'
+      : '填好后打卡会自动上传云端；换手机/清缓存后重新填一次即可。';
+  }
 }
 
 /* ============ 交互 ============ */
