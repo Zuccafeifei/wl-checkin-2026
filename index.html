@@ -286,10 +286,15 @@
     <div class="card">
       <h3>☁️ 云同步 <span class="tag">填一次即可</span></h3>
       <div class="fi">
-        <label>同步密钥（只存在你自己手机上）</label>
+        <label>① 码云令牌（主通道，国内直连）</label>
+        <input type="text" id="inGiteeToken" placeholder="32 位码云令牌" autocomplete="off">
+      </div>
+      <button class="btn sm" onclick="saveGiteeToken()">🔑 保存码云令牌并同步</button>
+      <div class="fi" style="margin-top:10px">
+        <label>② GitHub 密钥（备用通道，可不填）</label>
         <input type="text" id="inToken" placeholder="ghp_ 开头的密钥" autocomplete="off">
       </div>
-      <button class="btn sm" onclick="saveToken()">🔑 保存密钥并立即同步</button>
+      <button class="btn sm ghost" onclick="saveToken()">🔑 保存备用密钥</button>
       <button class="retry" onclick="syncNow(false)">🔄 立即重试同步（补传本机记录）</button>
       <button class="retry" onclick="enableNotify()" style="border-color:#a7f3d0;background:#f0fdf6;color:#047857">🔔 开启晚 20 点漏打卡提醒</button>
       <div class="note" id="lastSyncNote">填好后打卡会自动上传云端；换手机/清缓存后重新填一次即可。</div>
@@ -549,51 +554,97 @@ function mergeDB(base, inc){   // 以 ts 最新为准，保留本机照片
   }
   return out;
 }
-function gistOk(){ return !!GIST_ID && GIST_ID.indexOf('__') !== 0; }
-function cloudGet(cb){
-  if(!gistOk() || !getToken()){ cb(null, 'cfg'); return; }
-  fetch('https://api.github.com/gists/'+GIST_ID, {
-    headers:{Authorization:'Bearer '+getToken(), 'Accept':'application/vnd.github+json',
-             'Cache-Control':'no-store'}
-  }).then(function(r){ if(!r.ok){ cb(null, r.status); return null; } return r.json(); })
-    .then(function(g){ if(!g) return; var f=g.files && g.files['data.json']; cb(f?JSON.parse(f.content):{}, 200); })
-    .catch(function(){ cb(null, 'net'); });
+/* ============ 云同步：码云 Gitee（主）+ GitHub（备）双通道 ============ */
+var GITEE_GIST = 'w5ipxetacvr6lfoy87gh146';      // 码云数据库 ID（部署时注入）
+var giteeTok = '';
+function getGiteeTok(){ if(!giteeTok) giteeTok = localStorage.getItem('wl_gitee_token')||''; return giteeTok; }
+function setGiteeTok(t){ giteeTok=t; try{ localStorage.setItem('wl_gitee_token',t); }catch(e){} }
+function placeholder(v){ return !v || v.indexOf('__') === 0; }
+function ghOk(){ return !placeholder(GIST_ID) && !!getToken(); }
+function gyOk(){ return !placeholder(GITEE_GIST) && !!getGiteeTok(); }
+
+/* ---- 通道 A：码云 Gitee（国内直连，优先） ---- */
+function gyGet(cb){
+  if(!gyOk()){ cb(null,'cfg'); return; }
+  var u='https://gitee.com/api/v5/gists/'+GITEE_GIST+'?access_token='+encodeURIComponent(getGiteeTok())+'&_='+Date.now();
+  fetch(u, {headers:{'Accept':'application/json'}, cache:'no-store'})
+    .then(function(r){ if(!r.ok){ cb(null,r.status); return null; } return r.json(); })
+    .then(function(g){
+      if(!g) return;
+      var f=g.files && g.files['data.json'];
+      var c=(f===undefined||f===null)?'' : (typeof f==='string'? f : (f.content||''));
+      if(!c){ cb({},200); return; }
+      try{ cb(JSON.parse(c),200); }catch(e){ cb({},200); }
+    })
+    .catch(function(){ cb(null,'net'); });
 }
-function cloudPut(obj, cb){
-  if(!GIST_ID || !getToken()){ cb(false); return; }
+function gyPut(obj, cb){
+  if(!gyOk()){ cb(false); return; }
+  fetch('https://gitee.com/api/v5/gists/'+GITEE_GIST, {
+    method:'PATCH',
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify({access_token:getGiteeTok(), files:{'data.json':{content:JSON.stringify(obj)}}})
+  }).then(function(r){ cb(r.ok); }).catch(function(){ cb(false); });
+}
+
+/* ---- 通道 B：GitHub Gist（备用） ---- */
+function ghGet(cb){
+  if(!ghOk()){ cb(null,'cfg'); return; }
+  fetch('https://api.github.com/gists/'+GIST_ID, {
+    headers:{Authorization:'Bearer '+getToken(), 'Accept':'application/vnd.github+json', 'Cache-Control':'no-store'}
+  }).then(function(r){ if(!r.ok){ cb(null,r.status); return null; } return r.json(); })
+    .then(function(g){ if(!g) return; var f=g.files && g.files['data.json']; cb(f?JSON.parse(f.content):{},200); })
+    .catch(function(){ cb(null,'net'); });
+}
+function ghPut(obj, cb){
+  if(!ghOk()){ cb(false); return; }
   fetch('https://api.github.com/gists/'+GIST_ID, {
     method:'PATCH',
     headers:{Authorization:'Bearer '+getToken(), 'Accept':'application/vnd.github+json', 'Content-Type':'application/json'},
     body:JSON.stringify({files:{'data.json':{content:JSON.stringify(obj)}}})
   }).then(function(r){ cb(r.ok); }).catch(function(){ cb(false); });
 }
+
+function errMsg(e){
+  return (e==='net') ? '🌐 连不上云端（网络不通）→ 已存本机'
+       : (e===401||e===403) ? '🔑 令牌无效/已过期 → 到「☁️云同步」重填'
+       : (e===404) ? '⚠️ 数据库地址无效 → 联系管理员'
+       : (e==='cfg') ? '⚠️ 未配置令牌 → 到「☁️云同步」填一下'
+       : ('同步失败（'+e+'）→ 已存本机');
+}
 function syncNow(silent){
-  if(syncing || !gistOk() || !getToken()){ setStatus(gistOk()&&getToken()?'off':'none'); return; }
+  if(syncing) return;
+  var chs=[];
+  if(gyOk()) chs.push({n:'码云', get:gyGet, put:gyPut});
+  if(ghOk()) chs.push({n:'GitHub', get:ghGet, put:ghPut});
+  if(!chs.length){ setStatus('none'); return; }
   syncing=true; setStatus('ing');
-  cloudGet(function(remote, err){
-    if(remote===null){
+  var i=0, lastErr='';
+  (function next(){
+    if(i>=chs.length){
       syncing=false; setStatus('off');
-      if(!silent){
-        var m = (err==='net') ? '🌐 连不上云端（网络不通）→ 已存本机，联网自动补传'
-              : (err===401) ? '🔑 密钥无效/已过期 → 请到「☁️云同步」重填'
-              : (err===404) ? '⚠️ 数据库地址无效 → 联系管理员'
-              : (err==='cfg') ? '⚠️ 页面未配置密钥 → 到「☁️云同步」填一下'
-              : ('同步失败（'+err+'）→ 已存本机');
-        toast(m);
-      }
+      if(!silent) toast(errMsg(lastErr||'net'));
       return;
     }
-    var local=loadAll();
-    var merged=mergeDB(local, remote);
-    saveAll(merged);
-    cloudPut(slim(merged), function(ok){
-      syncing=false;
-      if(ok){ try{ localStorage.setItem('wl_last_sync', String(Date.now())); }catch(e){} }
-      setStatus(ok?'ok':'off');
-      renderAll();
-      if(!silent) toast(ok?'☁️ 已同步，两人进度已互通':'上传失败，数据已存本机');
+    var ch=chs[i++];
+    ch.get(function(remote, err){
+      if(remote===null || remote===undefined){ lastErr=err||'net'; next(); return; }
+      var merged=mergeDB(loadAll(), remote);
+      saveAll(merged);
+      ch.put(slim(merged), function(ok){
+        syncing=false;
+        if(ok){ try{ localStorage.setItem('wl_last_sync', String(Date.now())); }catch(e){} }
+        setStatus(ok?'ok':'off');
+        renderAll();
+        if(!silent) toast(ok? ('☁️ 已同步（'+ch.n+'通道），两人进度互通') : '上传失败，已存本机');
+      });
     });
-  });
+  })();
+}
+function saveGiteeToken(){
+  var t=(document.getElementById('inGiteeToken').value||'').trim();
+  if(!t){ toast('请先粘贴码云令牌'); return; }
+  setGiteeTok(t); toast('令牌已保存，正在同步…'); syncNow(false);
 }
 function saveToken(){
   var t=(document.getElementById('inToken').value||'').trim();
@@ -1116,16 +1167,19 @@ function envCheck(){
 
 /* ============ 初始化 ============ */
 (function(){
-  var g=urlParam('g'); if(g) GIST_ID=g;
+  var g=urlParam('g');  if(g)  GIST_ID=g;
+  var gg=urlParam('gy'); if(gg) GITEE_GIST=gg;
   var k=urlParam('k');
   if(k){ setToken(k); var el=document.getElementById('inToken'); if(el) el.value=k; }
+  var gk=urlParam('gk');
+  if(gk){ setGiteeTok(gk); var e2=document.getElementById('inGiteeToken'); if(e2) e2.value=gk; }
 })();
 clearForm();
 envCheck();
 renderAll();
-if(gistOk() && getToken()) syncNow(true); else setStatus('none');
+if(gyOk() || ghOk()) syncNow(true); else setStatus('none');
 // 每 2 分钟拉一次云端，看看对方有没有打卡
-setInterval(function(){ if(gistOk() && getToken() && !syncing) syncNow(true); }, 120000);
+setInterval(function(){ if((gyOk()||ghOk()) && !syncing) syncNow(true); }, 120000);
 // 每 10 分钟检查一次：晚上 20 点后还没打卡就发系统通知
 setInterval(notifyCheck, 600000); setTimeout(notifyCheck, 5000);
 setInterval(function(){ document.getElementById('inT').value=nowTime(); }, 30000);
